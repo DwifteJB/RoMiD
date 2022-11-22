@@ -2,7 +2,9 @@
 An extremely small go-lang app that allows discord rich presence in any game your playing.
 
 <div align=center>
+
 ![enter image description here](https://web-devs-should.go-get-a.life/5NUThJUYb.png)
+
 </div>
 
 ## Usage
