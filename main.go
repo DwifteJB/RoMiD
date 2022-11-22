@@ -2,43 +2,25 @@ package main
 
 import (
 	"encoding/json"
-	"regexp"
 	"fmt"
 	"io/ioutil"
-	"github.com/go-ole/go-ole"
-	"github.com/go-ole/go-ole/oleutil"
 	"os"
 	"os/exec"
 	"path"
 	"time"
+
 	"github.com/DwifteJB/rblx-richpresence/util"
 	"github.com/getlantern/systray"
+	"github.com/go-ole/go-ole"
+	"github.com/go-ole/go-ole/oleutil"
 	"github.com/hugolgst/rich-go/client"
 )
 
-var in_prog bool = false
 var current_placeId string
+var useProfile = false
+var profileDetails *util.RBLXPlayer
+var profilePic string
 
-
-type RBLXReturnData struct {
-	Data []struct {
-		TargetID int64  `json:"targetId"`
-		State    string `json:"state"`
-		ImageURL string `json:"imageUrl"`
-	} `json:"data"`
-}
-
-type MarketPlaceInfo struct { 
-	Name        string      `json:"Name"`
-	Description string      `json:"Description"`
-	Creator     struct {
-		Id              int    `json:"Id"`
-		Name            string `json:"Name"`
-		CreatorType     string `json:"CreatorType"`
-		CreatorTargetId int    `json:"CreatorTargetId"`
-	} `json:"Creator"`
-	IconImageAssetId       int64       `json:"IconImageAssetId"`
-}
 type Settings struct {
 	ShowProfile bool `json:"ShowProfile"`
 	ClientId string `json:"ClientId"`
@@ -87,7 +69,7 @@ func (c *config) Initalise() error {
 		defaultSettings := Settings{
 			ShowProfile: true,
 			ClientId: "1044653106690015333",
-			RobloxId: "136244389",
+			RobloxId: "156",
 		}
 		data, _:= json.Marshal(defaultSettings)
 		ioutil.WriteFile(cnf,data,0644)
@@ -97,12 +79,33 @@ func (c *config) Initalise() error {
 	if len(data) == 0 {
 		return nil
 	}
+	
 	return json.Unmarshal(data, &c.config)
 }
 
 
 
 func onReady() {
+	if err:= Config.Initalise(); err != nil {
+		fmt.Print(err.Error())
+	}
+	if (Config.config.ShowProfile == true) {
+		useProfile = true
+		profileDetails = util.GetUserDetails(Config.config.RobloxId)
+		if profileDetails == nil {
+			fmt.Println("Couldn't get your roblox details. defaulting to off.")
+			useProfile = false
+		}
+		profilePicDB := util.GetUserIcon(Config.config.RobloxId)
+		if profilePicDB == nil || len(profilePicDB.Data) == 0 {
+			fmt.Println("Couldn't get your roblox details. defaulting to off.")
+			useProfile = false
+		} else {
+			profilePic = profilePicDB.Data[0].ImageURL
+		}
+
+		
+	}
 	userDir, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Println(err)
@@ -116,6 +119,10 @@ func onReady() {
 	name.Disable()
 	name.SetIcon(util.GetIcon("./src/icon.ico"))
 
+	if useProfile == true {
+		profile := systray.AddMenuItem("Using account "+profileDetails.Name,"Using account "+profileDetails.Name)
+		profile.Disable()
+	}
 	systray.AddSeparator()
 
 	connected := systray.AddMenuItem("Not connected to any game...", "Not connected...")
@@ -137,9 +144,7 @@ func onReady() {
 	systray.AddSeparator()
 
 	quitMenu := systray.AddMenuItem("Close", "Quit the whole app")
-	if err:= Config.Initalise(); err != nil {
-		fmt.Print(err.Error())
-	}
+
 	go func() {
 		for {
 			select {
@@ -200,6 +205,7 @@ func onReady() {
 						return
 					}
 					runOnOSBoot.Check()
+					return
 				} else {
 					exists2, err := util.DoesPathExist(userDir + `\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\robloxRichPresence.lnk`)
 					if err != nil {
@@ -210,6 +216,7 @@ func onReady() {
 						os.Remove(userDir + `\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\robloxRichPresence.lnk`)
 					}
 					runOnOSBoot.Uncheck()
+					return
 				}
 			}
 		}
@@ -233,34 +240,46 @@ func onExit() {
 }
 
 func UpdatePresence(connected *systray.MenuItem) {
-	process := util.GrabRobloxProcess()
-	if process == nil {
+	placeId := util.GrabRobloxProcess()
+	if placeId == "nil" {
 		current_placeId = ""
-		in_prog = false
-		client.SetActivity(client.Activity {
-			Details: "Waiting to join a game...",
-			LargeImage: "https://github.com/DwifteJB.png",
-			LargeText: "Waiting to join a game",
-		})
 		connected.SetTooltip("Not connected to any game...")
 		connected.SetTitle("Not connected to any game...")
-	} else {
+	} else if placeId != current_placeId {
 		now := time.Now()
-		proc_args, _ := process.Cmdline()
-		placePattern := regexp.MustCompile(`placeId=(\d+)`)
-		placeMatch := placePattern.FindStringSubmatch(proc_args)
-		placeId := placeMatch[1]
-		fmt.Println(placeId != current_placeId)
-		if (placeId != current_placeId) {
-			place := util.GetPlaceInfoByPlaceId(placeId)
-			placeIcon := util.GetIconByPlaceId(placeId).Data[0].ImageURL
-			fmt.Printf("%+v\n", placeIcon)
-			connected.SetTooltip("Connected to " + place.Name + " by " + place.Creator.Name)
-			connected.SetTitle("Connected to " + place.Name + " by " + place.Creator.Name)
-			client.SetActivity(client.Activity {
+		place := util.GetPlaceInfoByPlaceId(placeId)
+		placeIcon := util.GetIconByPlaceId(placeId)
+		println(place)
+		if place == nil || placeIcon == nil {
+			fmt.Println("Couldn't get the games details..")
+			return
+		}
+		connected.SetTooltip("Connected to " + place.Name + " by " + place.Creator.Name)
+		connected.SetTitle("Connected to " + place.Name + " by " + place.Creator.Name)
+		Activity := client.Activity{}
+		if useProfile == true {
+			Activity = client.Activity{
 				State: "by " + place.Creator.Name,
 				Details: "Playing "+ place.Name,
-				LargeImage: placeIcon,
+				LargeImage: placeIcon.Data[0].ImageURL,
+				LargeText: "RBLX Presence 1.0 | Created by Dwifte",
+				SmallImage: profilePic,
+				SmallText: "Logged in as "+profileDetails.Name,
+				Buttons: []*client.Button {
+					{
+						Label: "Play this game",
+						Url: "https://www.roblox.com/games/" + placeId + "/-",
+					},
+				},
+				Timestamps: &client.Timestamps {
+					Start: &now,
+				},
+			}
+		} else {
+			Activity = client.Activity{
+				State: "by " + place.Creator.Name,
+				Details: "Playing "+ place.Name,
+				LargeImage: placeIcon.Data[0].ImageURL,
 				LargeText: "RBLX Presence 1.0 | Created by Dwifte",
 				Buttons: []*client.Button {
 					{
@@ -271,10 +290,11 @@ func UpdatePresence(connected *systray.MenuItem) {
 				Timestamps: &client.Timestamps {
 					Start: &now,
 				},
-			})
-			in_prog = true
-			current_placeId = placeId
+			}
 		}
+		client.SetActivity(Activity)
+		println("Connected to " + place.Name + " by " + place.Creator.Name)
+		current_placeId = placeId
 	}
 }
 
