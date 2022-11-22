@@ -245,6 +245,7 @@ func UpdatePresence(connected *systray.MenuItem) {
 		current_placeId = ""
 		connected.SetTooltip("Not connected to any game...")
 		connected.SetTitle("Not connected to any game...")
+		client.SetActivity(client.Activity{})
 	} else if placeId != current_placeId {
 		now := time.Now()
 		place := util.GetPlaceInfoByPlaceId(placeId)
