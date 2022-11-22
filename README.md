@@ -1,5 +1,5 @@
 
-An extremely small go-lang app that allows discord rich presence in any game your playing.
+An extremely small go-lang app that allows discord rich presence in any game you're playing.
 
 <div align=center>
 
@@ -7,19 +7,8 @@ An extremely small go-lang app that allows discord rich presence in any game you
 
 </div>
 
-## Usage
-**Ram: 8mb**
-
-![8mb ram](https://web-devs-should.go-get-a.life/5NUNSW6z6.png)
-
-**File size: 7.96mb**
-
-![7.96mb](https://web-devs-should.go-get-a.life/5NUOoGjMl.png)
-
-
 ## Building
 
-  
 
 ### Without window open (recommended)
 
@@ -38,6 +27,17 @@ An extremely small go-lang app that allows discord rich presence in any game you
     git clone https://github.com/DwifteJB/rblx-richpresence
     cd rblox-richpresence
     go build
+
+## Usage
+**Ram: 8mb**
+
+![8mb ram](https://web-devs-should.go-get-a.life/5NUNSW6z6.png)
+
+**File size: 7.96mb**
+
+![7.96mb](https://web-devs-should.go-get-a.life/5NUOoGjMl.png)
+
+
 
 ## Changing settings
 The directory that settings are saved to is: `%USERPROFILE%\.dwifte\roblox-rich-presence.json`
