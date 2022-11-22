@@ -1,32 +1,22 @@
 package main
 
 import (
-    "fmt"
-    "io/ioutil"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
-	"errors"
-	//"encoding/json"
+	"github.com/DwifteJB/rblx-richpresence/modules/util"
+	"github.com/getlantern/systray"
 	"github.com/hugolgst/rich-go/client"
-    "github.com/getlantern/systray"
 )
 
 type Settings struct {
 	ShowUsername bool `json:"ShowUsername"`
-	ClientId int `json:"ClientId"`
+	ClientId string `json:"ClientId"`
 }
 
-type MarketPlaceInfo struct { // https://mholt.github.io/json-to-go/
-	Name        string      `json:"Name"`
-	Description string      `json:"Description"`
-	Creator     struct {
-		ID              int    `json:"Id"`
-		Name            string `json:"Name"`
-		CreatorType     string `json:"CreatorType"`
-		CreatorTargetID int    `json:"CreatorTargetId"`
-	} `json:"Creator"`
-	IconImageAssetID       int64       `json:"IconImageAssetId"`
-}
 
 var Config = func() *config {
 	homeDir, err := os.UserHomeDir()
@@ -37,12 +27,15 @@ var Config = func() *config {
 	homeDir = path.Join(homeDir, ".dwifte")
 	return &config{
 		homeDir:    homeDir,
-		configFile: "roblox-rich-presence.json"}
+		configFile: "roblox-rich-presence.json",
+		config: Settings{},
+	}
 }()
 
 type config struct {
 	homeDir    string
 	configFile string
+	config Settings
 
 }
 
@@ -64,18 +57,19 @@ func (c *config) Initalise() error {
 		return err
 	}
 	if !exist {
-		f, err := os.Create(cnf)
-		if err != nil {
-			return err
+		defaultSettings := Settings{
+			ShowUsername: true,
+			ClientId: "1044653106690015333",
 		}
-		f.Close()
+		data, _:= json.Marshal(defaultSettings)
+		ioutil.WriteFile(cnf,data,0644)
 	} else if data, err = os.ReadFile(cnf); err != nil {
 		return err
 	}
 	if len(data) == 0 {
 		return nil
 	}
-	return nil
+	return json.Unmarshal(data, &c.config)
 }
 
 func main() {
@@ -111,11 +105,23 @@ func onReady() {
 			}
 		}
 	}()
+	err := client.Login(Config.config.ClientId)
+	if err != nil {
+		println("Couldn't start presence!")
+		systray.SetTitle("Couldn't start presence!")
+		systray.SetTooltip("Couldn't start presence!")
+		name.SetTooltip("Couldn't start presence!")
+	}
+	client.SetActivity(client.Activity {
+		Details: "Waiting to join a game...",
+		LargeImage: "https://github.com/DwifteJB.png",
+		LargeText: "Playing Roblox!",
+	})
 	fmt.Print("Presence is ready!\n")
 }
 
 func onExit() {
-    // Cleaning stuff here.
+    client.Logout()
 }
 
 func getIcon(s string) []byte {
