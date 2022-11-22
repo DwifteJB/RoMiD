@@ -4,6 +4,10 @@ import (
 	"github.com/shirou/gopsutil/process"
 	"net/http"
 	"encoding/json"
+	"errors"
+	"io/ioutil"
+	"os"
+	"fmt"
 )
 
 
@@ -41,4 +45,24 @@ func GetPlaceInfoByPlaceId(placeId string) *MarketPlaceInfo {
 	var info *MarketPlaceInfo
 	json.NewDecoder(resp.Body).Decode(&info)
 	return info
+}
+
+func getIcon(s string) []byte {
+    b, err := ioutil.ReadFile(s)
+    if err != nil {
+        fmt.Print(err)
+    }
+    return b
+}
+
+
+func doesPathExist(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	} else if err == nil {
+		return true, nil
+	} else {
+		return false, err
+	}
 }

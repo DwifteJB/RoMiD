@@ -2,16 +2,27 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
+	//"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
-	"github.com/DwifteJB/rblx-richpresence/modules/util"
+	"time"
+	"github.com/DwifteJB/rblx-richpresence/util"
 	"github.com/getlantern/systray"
 	"github.com/hugolgst/rich-go/client"
 )
-
+type MarketPlaceInfo struct { 
+	Name        string      `json:"Name"`
+	Description string      `json:"Description"`
+	Creator     struct {
+		Id              int    `json:"Id"`
+		Name            string `json:"Name"`
+		CreatorType     string `json:"CreatorType"`
+		CreatorTargetId int    `json:"CreatorTargetId"`
+	} `json:"Creator"`
+	IconImageAssetId       int64       `json:"IconImageAssetId"`
+}
 type Settings struct {
 	ShowUsername bool `json:"ShowUsername"`
 	ClientId string `json:"ClientId"`
@@ -118,28 +129,12 @@ func onReady() {
 		LargeText: "Playing Roblox!",
 	})
 	fmt.Print("Presence is ready!\n")
+	for {
+		time.Sleep(time.Second * 5)
+	}
 }
 
 func onExit() {
     client.Logout()
 }
 
-func getIcon(s string) []byte {
-    b, err := ioutil.ReadFile(s)
-    if err != nil {
-        fmt.Print(err)
-    }
-    return b
-}
-
-
-func doesPathExist(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-	} else if err == nil {
-		return true, nil
-	} else {
-		return false, err
-	}
-}
