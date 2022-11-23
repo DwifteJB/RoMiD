@@ -2,9 +2,15 @@ module github.com/DwifteJB/rblx-richpresence
 
 go 1.19
 
-require github.com/getlantern/systray v1.2.1
+require (
+	github.com/getlantern/systray v1.2.1
+	github.com/shirou/gopsutil/v3 v3.22.10
+)
 
-require github.com/shirou/gopsutil/v3 v3.22.10 // indirect
+require (
+	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
+	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
+)
 
 require (
 	github.com/getlantern/context v0.0.0-20190109183933-c447772a6520 // indirect
@@ -17,7 +23,6 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/hugolgst/rich-go v0.0.0-20210925091458-d59fb695d9c0
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
-	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect

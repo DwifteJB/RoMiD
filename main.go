@@ -111,13 +111,17 @@ func onReady() {
 		fmt.Println(err)
 		return
 	}
-    systray.SetIcon(util.GetIcon("./src/icon.ico"))
+	icon, err := Asset("src/icon.ico")
+	if err != nil {
+		println(err)
+	}
+    systray.SetIcon(icon)
     systray.SetTitle("Roblox Rich Presence")
     systray.SetTooltip("Roblox Rich Presence")
 
 	name := systray.AddMenuItem("RblxPresence","RblxPresence")
 	name.Disable()
-	name.SetIcon(util.GetIcon("./src/icon.ico"))
+	name.SetIcon(icon)
 
 	if useProfile == true {
 		profile := systray.AddMenuItem("Using account "+profileDetails.Name,"Using account "+profileDetails.Name)
@@ -221,13 +225,7 @@ func onReady() {
 			}
 		}
 	}()
-	errclient := client.Login(Config.config.ClientId)
-	if errclient != nil {
-		println("Couldn't start presence!")
-		systray.SetTitle("Couldn't start presence!")
-		systray.SetTooltip("Couldn't start presence!")
-		name.SetTooltip("Couldn't start presence!")
-	}
+
 	fmt.Print("Presence is ready!\n")
 	for {
 		UpdatePresence(connected)
@@ -245,8 +243,9 @@ func UpdatePresence(connected *systray.MenuItem) {
 		current_placeId = ""
 		connected.SetTooltip("Not connected to any game...")
 		connected.SetTitle("Not connected to any game...")
-		client.SetActivity(client.Activity{})
+		client.Logout()
 	} else if placeId != current_placeId {
+		
 		now := time.Now()
 		place := util.GetPlaceInfoByPlaceId(placeId)
 		placeIcon := util.GetIconByPlaceId(placeId)
@@ -254,6 +253,13 @@ func UpdatePresence(connected *systray.MenuItem) {
 		if place == nil || placeIcon == nil {
 			fmt.Println("Couldn't get the games details..")
 			return
+		}
+		errclient := client.Login(Config.config.ClientId)
+		if errclient != nil {
+			println("Couldn't start presence!")
+			systray.SetTitle("Couldn't start presence!")
+			systray.SetTooltip("Couldn't start presence!")
+
 		}
 		connected.SetTooltip("Connected to " + place.Name + " by " + place.Creator.Name)
 		connected.SetTitle("Connected to " + place.Name + " by " + place.Creator.Name)
