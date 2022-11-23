@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"path"
 	"time"
-
 	"github.com/DwifteJB/rblx-richpresence/util"
 	"github.com/getlantern/systray"
 	"github.com/go-ole/go-ole"
@@ -45,7 +44,6 @@ type config struct {
 	homeDir    string
 	configFile string
 	config Settings
-
 }
 
 func (c *config) Initalise() error {
