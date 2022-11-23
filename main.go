@@ -8,7 +8,8 @@ import (
 	"os/exec"
 	"path"
 	"time"
-	"github.com/DwifteJB/rblx-richpresence/util"
+	
+	"github.com/DwifteJB/RoMiD/util"
 	"github.com/getlantern/systray"
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
@@ -19,11 +20,23 @@ var current_placeId string
 var useProfile = false
 var profileDetails *util.RBLXPlayer
 var profilePic string
+var build Build
 
+// structs
 type Settings struct {
-	ShowProfile bool `json:"ShowProfile"`
-	ClientId string `json:"ClientId"`
-	RobloxId string `json:"RobloxId"`
+	ShowProfile bool   `json:"ShowProfile"`
+	ClientId    string `json:"ClientId"`
+	RobloxId    string `json:"RobloxId"`
+}
+
+type config struct {
+	homeDir    string
+	configFile string
+	config     Settings
+}
+
+type Build struct {
+	Version string `json:"version"`
 }
 
 var Config = func() *config {
@@ -36,15 +49,11 @@ var Config = func() *config {
 	return &config{
 		homeDir:    homeDir,
 		configFile: "roblox-rich-presence.json",
-		config: Settings{},
+		config:     Settings{},
 	}
 }()
 
-type config struct {
-	homeDir    string
-	configFile string
-	config Settings
-}
+
 
 func (c *config) Initalise() error {
 	var data []byte
@@ -66,28 +75,32 @@ func (c *config) Initalise() error {
 	if !exist {
 		defaultSettings := Settings{
 			ShowProfile: true,
-			ClientId: "1044653106690015333",
-			RobloxId: "156",
+			ClientId:    "1044653106690015333",
+			RobloxId:    "156",
 		}
-		data, _:= json.Marshal(defaultSettings)
-		ioutil.WriteFile(cnf,data,0644)
+		data, _ := json.Marshal(defaultSettings)
+		ioutil.WriteFile(cnf, data, 0644)
 	} else if data, err = os.ReadFile(cnf); err != nil {
 		return err
 	}
 	if len(data) == 0 {
 		return nil
 	}
-	
+
 	return json.Unmarshal(data, &c.config)
 }
 
-
-
 func onReady() {
-	if err:= Config.Initalise(); err != nil {
+	// read build info
+	buildBytes, err := Asset("src/build.json")
+	if err != nil {
+		println("Failed to read src/build.json")
+	}
+	json.Unmarshal(buildBytes, &build)
+	if err := Config.Initalise(); err != nil {
 		fmt.Print(err.Error())
 	}
-	if (Config.config.ShowProfile == true) {
+	if Config.config.ShowProfile == true {
 		useProfile = true
 		profileDetails = util.GetUserDetails(Config.config.RobloxId)
 		if profileDetails == nil {
@@ -102,7 +115,6 @@ func onReady() {
 			profilePic = profilePicDB.Data[0].ImageURL
 		}
 
-		
 	}
 	userDir, err := os.UserHomeDir()
 	if err != nil {
@@ -113,24 +125,24 @@ func onReady() {
 	if err != nil {
 		println(err)
 	}
-    systray.SetIcon(icon)
-    systray.SetTitle("Roblox Rich Presence")
-    systray.SetTooltip("Roblox Rich Presence")
+	systray.SetIcon(icon)
+	systray.SetTitle("Roblox Rich Presence")
+	systray.SetTooltip("Roblox Rich Presence")
 
-	name := systray.AddMenuItem("RblxPresence","RblxPresence")
+	name := systray.AddMenuItem("RoMiD "+build.Version, "RoMiD"+build.Version)
 	name.Disable()
 	name.SetIcon(icon)
 
 	if useProfile == true {
-		profile := systray.AddMenuItem("Using account "+profileDetails.Name,"Using account "+profileDetails.Name)
+		profile := systray.AddMenuItem("Using account "+profileDetails.Name, "Using account "+profileDetails.Name)
 		profile.Disable()
 	}
 	systray.AddSeparator()
 
 	connected := systray.AddMenuItem("Not connected to any game...", "Not connected...")
 	connected.Disable()
-	
-	runOnOSBoot := systray.AddMenuItemCheckbox("Run on boot","Run on boot",false)
+
+	runOnOSBoot := systray.AddMenuItemCheckbox("Run on boot", "Run on boot", false)
 
 	exists, err := util.DoesPathExist(userDir + `\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\robloxRichPresence.lnk`)
 
@@ -140,7 +152,7 @@ func onReady() {
 	if exists {
 		runOnOSBoot.Check()
 	}
-	
+
 	openNotepad := systray.AddMenuItem("Open settings", "Open settings")
 
 	systray.AddSeparator()
@@ -159,13 +171,13 @@ func onReady() {
 				return
 			case <-runOnOSBoot.ClickedCh:
 				if runOnOSBoot.Checked() == false {
-					exists2, err := util.DoesPathExist(userDir + `\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\robloxRichPresence.lnk`)
+					exists2, err := util.DoesPathExist(userDir + `\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\RoMiD.lnk`)
 					if err != nil {
 						fmt.Println(err)
 						return
 					}
 					if exists2 {
-						os.Remove(userDir + `\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\robloxRichPresence.lnk`)
+						os.Remove(userDir + `\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\RoMiD.lnk`)
 					}
 					ex, err := os.Executable()
 
@@ -183,8 +195,8 @@ func onReady() {
 						return
 					}
 					defer wshell.Release()
-					
-					cs, err := oleutil.CallMethod(wshell, "CreateShortcut", userDir + `\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\robloxRichPresence.lnk`)
+
+					cs, err := oleutil.CallMethod(wshell, "CreateShortcut", userDir+`\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\RoMiD.lnk`)
 					if err != nil {
 						fmt.Println(err)
 						return
@@ -195,8 +207,8 @@ func onReady() {
 						fmt.Println(err)
 						return
 					}
-		
-					_, err = oleutil.PutProperty(idispatch, "Description", "Auto-run for Rblx-RichPresence")
+
+					_, err = oleutil.PutProperty(idispatch, "Description", "Auto-run for RoMiD rich precense")
 					if err != nil {
 						fmt.Println(err)
 						return
@@ -209,13 +221,13 @@ func onReady() {
 					runOnOSBoot.Check()
 					return
 				} else {
-					exists2, err := util.DoesPathExist(userDir + `\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\robloxRichPresence.lnk`)
+					exists2, err := util.DoesPathExist(userDir + `\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\RoMiD.lnk`)
 					if err != nil {
 						fmt.Println(err)
 						return
 					}
 					if exists2 {
-						os.Remove(userDir + `\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\robloxRichPresence.lnk`)
+						os.Remove(userDir + `\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\RoMiD.lnk`)
 					}
 					runOnOSBoot.Uncheck()
 					return
@@ -224,7 +236,7 @@ func onReady() {
 		}
 	}()
 
-	fmt.Print("Presence is ready!\n")
+	fmt.Println("RoMiD is ready! v"+build.Version)
 	for {
 		UpdatePresence(connected)
 		time.Sleep(time.Second * 7)
@@ -232,7 +244,7 @@ func onReady() {
 }
 
 func onExit() {
-    client.Logout()
+	client.Logout()
 }
 
 func UpdatePresence(connected *systray.MenuItem) {
@@ -243,7 +255,7 @@ func UpdatePresence(connected *systray.MenuItem) {
 		connected.SetTitle("Not connected to any game...")
 		client.Logout()
 	} else if placeId != current_placeId {
-		
+
 		now := time.Now()
 		place := util.GetPlaceInfoByPlaceId(placeId)
 		placeIcon := util.GetIconByPlaceId(placeId)
@@ -257,45 +269,27 @@ func UpdatePresence(connected *systray.MenuItem) {
 			println("Couldn't start presence!")
 			systray.SetTitle("Couldn't start presence!")
 			systray.SetTooltip("Couldn't start presence!")
-
 		}
 		connected.SetTooltip("Connected to " + place.Name + " by " + place.Creator.Name)
 		connected.SetTitle("Connected to " + place.Name + " by " + place.Creator.Name)
-		Activity := client.Activity{}
+		Activity := client.Activity{
+			State: "by " + place.Creator.Name,
+			Details: "Playing " + place.Name,
+			LargeImage: placeIcon.Data[0].ImageURL,
+			LargeText:  "RoMiD " + build.Version + " | Created by Dwifte",
+			Buttons: []*client.Button{
+				{
+					Label: "Play this game",
+					Url:   "https://www.roblox.com/games/" + placeId + "/-",
+				},
+			},
+			Timestamps: &client.Timestamps{
+				Start: &now,
+			},
+		}
 		if useProfile == true {
-			Activity = client.Activity{
-				State: "by " + place.Creator.Name,
-				Details: "Playing "+ place.Name,
-				LargeImage: placeIcon.Data[0].ImageURL,
-				LargeText: "RBLX Presence 1.0 | Created by Dwifte",
-				SmallImage: profilePic,
-				SmallText: "Logged in as "+profileDetails.Name,
-				Buttons: []*client.Button {
-					{
-						Label: "Play this game",
-						Url: "https://www.roblox.com/games/" + placeId + "/-",
-					},
-				},
-				Timestamps: &client.Timestamps {
-					Start: &now,
-				},
-			}
-		} else {
-			Activity = client.Activity{
-				State: "by " + place.Creator.Name,
-				Details: "Playing "+ place.Name,
-				LargeImage: placeIcon.Data[0].ImageURL,
-				LargeText: "RBLX Presence 1.0 | Created by Dwifte",
-				Buttons: []*client.Button {
-					{
-						Label: "Play this game",
-						Url: "https://www.roblox.com/games/" + placeId + "/-",
-					},
-				},
-				Timestamps: &client.Timestamps {
-					Start: &now,
-				},
-			}
+			Activity.SmallText = "Logged in as " + profileDetails.Name
+			Activity.SmallImage = profilePic
 		}
 		client.SetActivity(Activity)
 		println("Connected to " + place.Name + " by " + place.Creator.Name)
@@ -304,5 +298,5 @@ func UpdatePresence(connected *systray.MenuItem) {
 }
 
 func main() {
-    systray.Run(onReady, onExit)
+	systray.Run(onReady, onExit)
 }

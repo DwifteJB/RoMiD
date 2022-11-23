@@ -1,4 +1,4 @@
-module github.com/DwifteJB/rblx-richpresence
+module github.com/DwifteJB/RoMiD
 
 go 1.19
 

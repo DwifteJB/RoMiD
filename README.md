@@ -15,8 +15,8 @@ An extremely small go-lang app that allows discord rich presence in any game you
   
 
     // clone repo!
-    git clone https://github.com/DwifteJB/rblx-richpresence
-    cd rblox-richpresence
+    git clone https://github.com/DwifteJB/RoMiD
+    cd RoMiD
     go build -ldflags "-H=windowsgui"
 
   
@@ -24,8 +24,8 @@ An extremely small go-lang app that allows discord rich presence in any game you
 ### With window open (debug)
 
     // clone repo!
-    git clone https://github.com/DwifteJB/rblx-richpresence
-    cd rblox-richpresence
+    git clone https://github.com/DwifteJB/RoMiD
+    cd RoMiD
     go build
 
 ## Usage
