@@ -9,7 +9,9 @@ jobs:
         uses: actions/checkout@v2
         with:
           # fetch 20 commits (increase if needed)
-          fetch-depth: '20'
+          fetch-depth: '1'
       - name: Lint
         # run linter (use latest version here)
         uses: g4s8/gitlint-action@0.2
+        with:
+          pattern: (?<type>build)(?<scope>(?:\([^()\r\n]*\)|\()?(?<breaking>!)?)(?<subject>:.*)?
