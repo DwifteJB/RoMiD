@@ -15,7 +15,7 @@ jobs:
       with:
         go-version: 1.18
     - name: Install go-bindata
-      run: go get -u github.com/go-bindata/go-bindata/...
+      run: go install -a -v github.com/go-bindata/go-bindata/...@latest
       continue-on-error: true
     - name: Compiling src folder to go file
       run: go-bindata -nomemcopy src
