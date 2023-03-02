@@ -10,7 +10,7 @@ An extremely small go-lang app that allows discord rich presence in any game you
 ## Building
 
 
-### Without window open (recommended)
+### Without command window open
 
   
 
@@ -21,7 +21,7 @@ An extremely small go-lang app that allows discord rich presence in any game you
 
   
 
-### With window open (debug)
+### With command window open
 
     // clone repo!
     git clone https://github.com/DwifteJB/RoMiD
