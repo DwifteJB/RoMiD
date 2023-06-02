@@ -1,3 +1,4 @@
+# RoMiD
 
 An extremely small go-lang app that allows discord rich presence in any game you're playing.
 
